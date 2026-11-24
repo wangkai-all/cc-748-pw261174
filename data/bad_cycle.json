@@ -1,0 +1,44 @@
+{
+  "id": "bad_cycle",
+  "name": "非法样例：循环依赖",
+  "description": "工序 X、Y、Z 的前置关系构成环 X->Y->Z->X，无法进行拓扑排序，CPM 无法定义。加载此数据集应返回 cyclic_dependency。",
+  "expect_invalid": true,
+  "tags": ["循环依赖"],
+  "risk_factors": [],
+  "resources": [],
+  "activities": [
+    {
+      "id": "X",
+      "name": "工序 X",
+      "base_duration": 4.0,
+      "min_duration": 3.0,
+      "idio_sd": 0.2,
+      "risk_loadings": {},
+      "crash_cost_per_day": 1000.0,
+      "resources": {},
+      "predecessors": ["Z"]
+    },
+    {
+      "id": "Y",
+      "name": "工序 Y",
+      "base_duration": 5.0,
+      "min_duration": 4.0,
+      "idio_sd": 0.2,
+      "risk_loadings": {},
+      "crash_cost_per_day": 1000.0,
+      "resources": {},
+      "predecessors": ["X"]
+    },
+    {
+      "id": "Z",
+      "name": "工序 Z",
+      "base_duration": 3.0,
+      "min_duration": 2.0,
+      "idio_sd": 0.2,
+      "risk_loadings": {},
+      "crash_cost_per_day": 1000.0,
+      "resources": {},
+      "predecessors": ["Y"]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "bad_resource",
+  "name": "非法样例：资源容量冲突",
+  "description": "P 与 Q 无前置关系、按最早开始同时执行，各需 2 个班组而班组容量只有 3，名义进度计划即超载，应返回 resource_capacity_conflict。",
+  "expect_invalid": true,
+  "tags": ["资源容量"],
+  "risk_factors": [],
+  "resources": [
+    {"id": "crew", "name": "施工班组（容量 3）", "capacity": 3.0}
+  ],
+  "activities": [
+    {
+      "id": "P",
+      "name": "并行工序 P",
+      "base_duration": 5.0,
+      "min_duration": 4.0,
+      "idio_sd": 0.3,
+      "risk_loadings": {},
+      "crash_cost_per_day": 1000.0,
+      "resources": {"crew": 2.0},
+      "predecessors": []
+    },
+    {
+      "id": "Q",
+      "name": "并行工序 Q",
+      "base_duration": 4.0,
+      "min_duration": 3.0,
+      "idio_sd": 0.3,
+      "risk_loadings": {},
+      "crash_cost_per_day": 1000.0,
+      "resources": {"crew": 2.0},
+      "predecessors": []
+    },
+    {
+      "id": "R",
+      "name": "收尾工序 R",
+      "base_duration": 2.0,
+      "min_duration": 1.5,
+      "idio_sd": 0.1,
+      "risk_loadings": {},
+      "crash_cost_per_day": 900.0,
+      "resources": {"crew": 1.0},
+      "predecessors": ["P", "Q"]
+    }
+  ]
+}

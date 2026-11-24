@@ -1,0 +1,41 @@
+{
+  "id": "bad_deadline",
+  "name": "非法样例：不可达截止期",
+  "description": "名义工期 12 天，即使全部工序压缩到数据支持的最短持续时间仍需 9 天；提交截止期 7 天应返回 unreachable_deadline。",
+  "expect_invalid": true,
+  "tags": ["不可达截止期"],
+  "risk_factors": [
+    {
+      "id": "wx",
+      "name": "共同天气源",
+      "kind": "normal",
+      "mean": 0.0,
+      "sd": 1.0
+    }
+  ],
+  "resources": [],
+  "activities": [
+    {
+      "id": "S1",
+      "name": "工序 S1",
+      "base_duration": 5.0,
+      "min_duration": 4.0,
+      "idio_sd": 0.2,
+      "risk_loadings": {"wx": 0.5},
+      "crash_cost_per_day": 1500.0,
+      "resources": {},
+      "predecessors": []
+    },
+    {
+      "id": "S2",
+      "name": "工序 S2",
+      "base_duration": 7.0,
+      "min_duration": 5.0,
+      "idio_sd": 0.2,
+      "risk_loadings": {"wx": 0.7},
+      "crash_cost_per_day": 1800.0,
+      "resources": {},
+      "predecessors": ["S1"]
+    }
+  ]
+}

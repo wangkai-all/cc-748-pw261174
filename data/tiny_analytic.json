@@ -1,0 +1,60 @@
+{
+  "id": "tiny_analytic",
+  "name": "解析可验小网络（两条平行工序）",
+  "description": "两个独立并行工序汇入里程碑，持续时间均为正态。关键度与准时概率有闭式解，供固定种子复核：P(A 为关键工序)=Phi((mu_A-mu_B)/sqrt(sd_A^2+sd_B^2))=Phi(-0.8)≈0.2119；截止期 22 天时 P(max<=22)=Phi(6)·Phi(20/3)≈0.999999999（截止期实际上只约束 A）；E[max]≈12.3005。",
+  "tags": ["解析可验", "正态", "平行工序"],
+  "risk_factors": [
+    {
+      "id": "fa",
+      "name": "工序 A 专属风险源",
+      "kind": "normal",
+      "mean": 0.0,
+      "sd": 1.0,
+      "description": "均值 0、标准差 1 的共同冲击；A 的加载量为 2（天）。"
+    },
+    {
+      "id": "fb",
+      "name": "工序 B 专属风险源",
+      "kind": "normal",
+      "mean": 0.0,
+      "sd": 1.0,
+      "description": "与 fa 相互独立；B 的加载量为 1.5（天）。"
+    }
+  ],
+  "resources": [],
+  "activities": [
+    {
+      "id": "A",
+      "name": "平行工序 A",
+      "base_duration": 10.0,
+      "min_duration": 7.0,
+      "idio_sd": 0.0,
+      "risk_loadings": {"fa": 2.0},
+      "crash_cost_per_day": 1000.0,
+      "resources": {},
+      "predecessors": []
+    },
+    {
+      "id": "B",
+      "name": "平行工序 B",
+      "base_duration": 12.0,
+      "min_duration": 9.0,
+      "idio_sd": 0.0,
+      "risk_loadings": {"fb": 1.5},
+      "crash_cost_per_day": 800.0,
+      "resources": {},
+      "predecessors": []
+    },
+    {
+      "id": "M",
+      "name": "汇合里程碑（零持续时间占位）",
+      "base_duration": 0.01,
+      "min_duration": 0.01,
+      "idio_sd": 0.0,
+      "risk_loadings": {},
+      "crash_cost_per_day": 0.0,
+      "resources": {},
+      "predecessors": ["A", "B"]
+    }
+  ]
+}

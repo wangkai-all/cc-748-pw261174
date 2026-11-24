@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>工期风险分析台 · 共同风险源蒙特卡洛</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">⏱</span>
+      <div>
+        <h1>工期风险分析台</h1>
+        <p class="subtitle">共同天气 / 材料风险源 · 关键路径蒙特卡洛 · 共同随机场景（CRN）赶工对比</p>
+      </div>
+    </div>
+    <div class="topbar-status" id="jobBadge" hidden>
+      <span class="spinner" aria-hidden="true"></span>
+      <span id="jobBadgeText">计算中…</span>
+      <button class="btn btn-ghost btn-sm" id="cancelJobBtn" type="button">取消</button>
+    </div>
+  </header>
+
+  <section class="controlbar card">
+    <div class="field">
+      <label for="datasetSelect">数据集</label>
+      <select id="datasetSelect"></select>
+    </div>
+    <div class="field">
+      <label for="seedInput">随机种子</label>
+      <input id="seedInput" type="number" min="0" step="1" value="42">
+    </div>
+    <div class="field">
+      <label for="nInput">场景数</label>
+      <input id="nInput" type="number" min="100" max="100000" step="500" value="5000">
+    </div>
+    <div class="field">
+      <label for="deadlineInput">截止期（天，可空）</label>
+      <input id="deadlineInput" type="number" min="0" step="0.5" placeholder="例如 35">
+    </div>
+    <div class="field">
+      <label for="budgetInput">赶工预算（成本单位）</label>
+      <input id="budgetInput" type="number" min="0" step="500" value="60000">
+    </div>
+    <div class="field field-actions">
+      <button class="btn btn-primary" id="runBtn" type="button">运行模拟</button>
+      <button class="btn" id="frontierBtn" type="button">计算成本前沿</button>
+    </div>
+  </section>
+
+  <div id="issueBanner" class="issue-banner" hidden></div>
+
+  <section class="network-card card">
+    <div class="card-head">
+      <h2 id="networkTitle">工序网络</h2>
+      <p class="hint" id="networkHint">节点颜色按关键度指数（蓝→深蓝），点击节点查看迟延来源与赶工分配。</p>
+    </div>
+    <div class="network-scroll">
+      <svg id="networkSvg" role="img" aria-label="工序网络图"></svg>
+    </div>
+    <div class="legend-row">
+      <span class="legend-item"><span class="swatch swatch-low"></span>低关键度</span>
+      <span class="legend-item"><span class="swatch swatch-mid"></span>中关键度</span>
+      <span class="legend-item"><span class="swatch swatch-high"></span>高关键度</span>
+      <span class="legend-item"><span class="swatch swatch-crit"></span>名义关键路径</span>
+    </div>
+  </section>
+
+  <section class="stats-grid" id="statsGrid" hidden>
+    <div class="stat-tile"><span class="stat-label">平均工期（天）</span><strong class="stat-value" id="stMean">—</strong></div>
+    <div class="stat-tile"><span class="stat-label">工期标准差</span><strong class="stat-value" id="stSd">—</strong></div>
+    <div class="stat-tile"><span class="stat-label">P5 / P50 / P95</span><strong class="stat-value" id="stPercentiles">—</strong></div>
+    <div class="stat-tile"><span class="stat-label">准时概率</span><strong class="stat-value" id="stOnTime">—</strong></div>
+    <div class="stat-tile"><span class="stat-label">赶工成本</span><strong class="stat-value" id="stCost">—</strong></div>
+    <div class="stat-tile"><span class="stat-label">计算签名（防旧结果覆盖）</span><strong class="stat-value stat-value-sm" id="stSignature">—</strong></div>
+  </section>
+
+  <section class="charts-grid">
+    <div class="card chart-card">
+      <div class="card-head">
+        <h2>完工时间分布</h2>
+        <p class="hint">全部场景的项目工期直方图，竖线为截止期。</p>
+      </div>
+      <svg id="histSvg" role="img" aria-label="完工时间直方图"></svg>
+      <div id="histTooltip" class="tooltip" hidden></div>
+    </div>
+    <div class="card chart-card">
+      <div class="card-head">
+        <h2>成本前沿（同一组场景）</h2>
+        <p class="hint">横轴赶工成本，纵轴平均工期；点标注准时概率，所有方案在相同随机场景下评估。</p>
+      </div>
+      <svg id="frontierSvg" role="img" aria-label="成本前沿图"></svg>
+      <div id="frontierTooltip" class="tooltip" hidden></div>
+    </div>
+  </section>
+
+  <section class="bottom-grid">
+    <div class="card">
+      <div class="card-head">
+        <h2>工序明细</h2>
+        <p class="hint">关键度指数＝该工序处于关键路径的场景比例；关键性＝工序工期与总工期的相关系数。</p>
+      </div>
+      <div class="table-wrap">
+        <table id="activityTable">
+          <thead>
+            <tr>
+              <th>工序</th><th>名义工期</th><th>平均工期</th><th>标准差</th>
+              <th>关键度指数</th><th>关键性</th><th>已赶工（天）</th><th>赶工成本/天</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="detailCard">
+      <div class="card-head">
+        <h2 id="detailTitle">节点详情</h2>
+        <p class="hint">点击网络图中的工序节点，查看迟延来源并分配赶工预算。</p>
+      </div>
+      <div id="detailBody" class="detail-empty">尚未选择工序。</div>
+    </div>
+  </section>
+
+  <section class="card export-card">
+    <div class="card-head">
+      <h2>场景级明细导出</h2>
+      <p class="hint">导出每个随机场景的风险因子取值、各工序工期、项目工期与关键路径，供独立复核。</p>
+    </div>
+    <div class="export-row">
+      <button class="btn" id="exportCsvBtn" disabled type="button">下载场景 CSV</button>
+      <button class="btn" id="exportJsonBtn" disabled type="button">下载完整 JSON</button>
+      <button class="btn" id="exportFrontierCsvBtn" disabled type="button">下载前沿 CSV</button>
+      <span class="hint" id="exportHint"></span>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>纯标准库实现 · 固定种子可复现 · 风险只经共同来源注入，禁止独立噪声替代</span>
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
